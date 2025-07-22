@@ -1,0 +1,10 @@
+<!doctype html>
+<title>Register</title>
+<h2>Register</h2>
+<form method="POST">
+    {{ form.hidden_tag() }}
+    {{ form.username.label }} {{ form.username() }}<br>
+    {{ form.password.label }} {{ form.password() }}<br>
+    {{ form.submit() }}
+</form>
+<a href="{{ url_for('main.login') }}">Вече имаш акаунт? Влез</a>
