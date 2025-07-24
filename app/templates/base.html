@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Glo</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f8f9fa; }
+        nav a { margin-right: 15px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+        .flash { background-color: #ffeeba; padding: 10px; margin-bottom: 15px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="{{ url_for('main.home') }}">🏠 Home</a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.dashboard') }}">📋 Dashboard</a>
+                <a href="{{ url_for('main.logout') }}">🚪 Logout</a>
+            {% else %}
+                <a href="{{ url_for('main.login') }}">🔐 Login</a>
+                <a href="{{ url_for('main.register') }}">📝 Register</a>
+            {% endif %}
+        </nav>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

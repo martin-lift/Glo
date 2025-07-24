@@ -1,5 +1,19 @@
-<!doctype html>
-<title>Home</title>
-<h1>Glo - Learning Words</h1>
-<a href="{{ url_for('main.login') }}">Login</a> |
-<a href="{{ url_for('main.register') }}">Register</a>
+
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Welcome to Glo!</h1>
+  <p>Learning Words</p>
+
+  {% if current_user.is_authenticated %}
+    <p><a href="{{ url_for('main.dashboard') }}">📋 Dashboard</a></p>
+    <p><a href="{{ url_for('main.new_text') }}">➕ Add New Text</a></p>
+    <p><a href="{{ url_for('main.logout') }}">🚪 Log out</a></p>
+
+  {% else %}
+    <p>
+      <a href="{{ url_for('main.login') }}">🔐 Log in</a> or
+      <a href="{{ url_for('main.register') }}">📝 Register</a> to get started.
+    </p>
+  {% endif %}
+{% endblock %}

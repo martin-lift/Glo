@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Your Texts</h2>
+
+  <a href="{{ url_for('main.new_text') }}">➕ Add New Text</a>
+
+  {% if texts %}
+    <ul>
+      {% for text in texts %}
+        <li>
+          <strong>{{ text.title }}</strong><br>
+          {{ text.url or '' }}<br>
+          <small>{{ text.content[:100] }}...</small>
+            <br><a href="{{ url_for('main.view_training_lists', text_id=text.id) }}">📂 View Training Lists</a>
+          <br>&nbsp;
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>You haven't added any texts yet.</p>
+  {% endif %}
+{% endblock %}

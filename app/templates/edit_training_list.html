@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Edit Training List: "{{ training_list.name }}"</h2>
+
+  <a href="{{ url_for('main.add_training_item', list_id=training_list.id) }}">➕ Add New Phrase</a>
+  <br><br>
+
+  {% if items %}
+    <ul>
+      {% for item in items %}
+        <li>
+          <strong>{{ item.phrase }}</strong> → {{ item.translation }}
+          {% if item.context %}
+            <br><em>{{ item.context }}</em>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No phrases added yet.</p>
+  {% endif %}
+
+  <a href="{{ url_for('main.view_training_lists', text_id=training_list.text.id) }}">← Back to Lists</a>
+{% endblock %}

@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Length
+from wtforms import StringField, TextAreaField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Length, Optional, URL
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -11,3 +11,19 @@ class RegisterForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=3)])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Register')
+
+class TextForReadingForm(FlaskForm):
+    title = StringField("Title", validators=[DataRequired()])
+    content = TextAreaField("Content", validators=[DataRequired()])
+    url = StringField("Source URL", validators=[Optional(), URL()])
+    submit = SubmitField("Save Text")
+
+class TrainingListForm(FlaskForm):
+    name = StringField("List name", validators=[DataRequired()])
+    submit = SubmitField("Create List")
+
+class TrainingItemForm(FlaskForm):
+    phrase = StringField("Phrase", validators=[DataRequired()])
+    translation = TextAreaField("Translation", validators=[DataRequired()])
+    context = TextAreaField("Context (optional)", validators=[Optional()])
+    submit = SubmitField("Add Item")
