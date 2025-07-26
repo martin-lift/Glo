@@ -22,6 +22,8 @@
         <li>
           <strong>{{ lst.name }}</strong> ({{ lst.created_at.strftime('%Y-%m-%d') }})
           <a href="{{ url_for('main.edit_training_list', list_id=lst.id) }}">✏️ Edit</a>
+          <a href="{{ url_for('main.add_training_item', list_id=lst.id) }}">➕ Add</a> |
+          <a href="{{ url_for('main.train_list', list_id=lst.id) }}">▶️ Train</a>
         </li>
       {% endfor %}
     </ul>

@@ -1,6 +1,9 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, Optional, URL
+from wtforms.validators import Length
+
+PHRASE_MAX_LEN = 200
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -27,3 +30,11 @@ class TrainingItemForm(FlaskForm):
     translation = TextAreaField("Translation", validators=[DataRequired()])
     context = TextAreaField("Context (optional)", validators=[Optional()])
     submit = SubmitField("Add Item")
+
+class TrainingItemWithListForm(FlaskForm):
+    list_name = StringField("List name", validators=[DataRequired()])
+    phrase = StringField("Phrase", validators=[DataRequired(), Length(max=PHRASE_MAX_LEN)])
+    translation = TextAreaField("Translation", validators=[DataRequired()])
+    context = TextAreaField("Context (optional)", validators=[Optional()])
+    submit = SubmitField("Add Item")
+

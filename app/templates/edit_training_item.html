@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Edit Phrase</h2>
+
+  <form method="POST">
+    {{ form.hidden_tag() }}
+    <p>{{ form.phrase.label }}<br>{{ form.phrase(size=60) }}</p>
+    <p>{{ form.translation.label }}<br>{{ form.translation(rows=4, cols=60) }}</p>
+    <p>{{ form.context.label }}<br>{{ form.context(rows=2, cols=60) }}</p>
+    <p>{{ form.submit(value='Save Changes') }}</p>
+  </form>
+
+    <a href="{{ url_for('main.edit_training_list', list_id=item.training_list_id) }}">← Back to List</a>
+  <br>
+    <a href="{{ url_for('main.view_training_lists', text_id=training_list.text.id) }}">← Back to Lists</a>
+{% endblock %}

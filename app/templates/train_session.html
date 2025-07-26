@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Training: "{{ training_list.name }}"</h2>
+
+  {% if item %}
+    <p><strong>Phrase:</strong> {{ item.phrase }}</p>
+    <form method="POST" action="#">
+      <!-- Later we’ll add input and evaluation -->
+      <p><em>(Press Enter to show translation)</em></p>
+    </form>
+  {% else %}
+    <p>No item with training_order = 1 found.</p>
+  {% endif %}
+
+  <a href="{{ url_for('main.edit_training_list', list_id=training_list.id) }}">← Back to List</a>
+  <br>
+  <a href="{{ url_for('main.view_training_lists', text_id=training_list.text.id) }}">← Back to Lists</a>
+
+{% endblock %}

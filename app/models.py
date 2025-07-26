@@ -32,13 +32,14 @@ class TrainingItem(db.Model):
     phrase = db.Column(db.String(200), nullable=False)
     translation = db.Column(db.Text, nullable=False)
     context = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    training_order = db.Column(db.Integer, default=1)
     num_first_attempt = db.Column(db.Integer, default=0)
     num_second_attempt = db.Column(db.Integer, default=0)
     num_extra_attempt = db.Column(db.Integer, default=0)
     num_skipped = db.Column(db.Integer, default=0)
     last_trained_at = db.Column(db.DateTime)
     last_result = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     training_list_id = db.Column(db.Integer, db.ForeignKey('training_list.id'), nullable=False)
 
 @login_manager.user_loader

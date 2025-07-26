@@ -13,6 +13,10 @@
           {% if item.context %}
             <br><em>{{ item.context }}</em>
           {% endif %}
+          <br>
+          <a href="{{ url_for('main.edit_training_item', item_id=item.id) }}">✏️ Edit</a>
+          |
+          <a href="{{ url_for('main.delete_training_item', item_id=item.id) }}" onclick="return confirm('Delete this item?');">🗑️ Delete</a>
         </li>
       {% endfor %}
     </ul>
