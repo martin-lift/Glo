@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, Optional, URL
 from wtforms.validators import Length
+from wtforms import SelectField
 
 PHRASE_MAX_LEN = 200
 
@@ -23,6 +24,8 @@ class TextForReadingForm(FlaskForm):
 
 class TrainingListForm(FlaskForm):
     name = StringField("List name", validators=[DataRequired()])
+    lang_from = SelectField('From Language', choices=[], validators=[DataRequired()])
+    lang_to = SelectField('To Language', choices=[], validators=[DataRequired()])
     submit = SubmitField("Create List")
 
 class TrainingItemForm(FlaskForm):

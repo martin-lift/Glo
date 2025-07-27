@@ -2,6 +2,27 @@
 {% block content %}
   <h2>Edit Training List: "{{ training_list.name }}"</h2>
 
+  <form method="post">
+    {{ form.hidden_tag() }}
+
+    <div class="mb-3">
+      {{ form.name.label }}<br>
+      {{ form.name(class="form-control") }}
+    </div>
+
+    <div class="mb-3">
+      {{ form.lang_from.label }}<br>
+      {{ form.lang_from(class="form-select") }}
+    </div>
+
+    <div class="mb-3">
+      {{ form.lang_to.label }}<br>
+      {{ form.lang_to(class="form-select") }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">{{ form.submit.label }}</button>
+  </form>
+
   <a href="{{ url_for('main.add_training_item', list_id=training_list.id) }}">➕ Add New Phrase</a>
   <br><br>
 

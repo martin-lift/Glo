@@ -16,92 +16,113 @@
     border: 1px solid #ccc;
     padding: 15px;
     border-radius: 10px;
-    width: 300px;
+    width: 330px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
     z-index: 999;
   ">
-  <form id="item-form">
-    {{ form.hidden_tag() }}
-    <label>{{ form.list_name.label }}</label><br>
-    {{ form.list_name(size=30, id="list_name", list="available_lists") }}<br><br>
+          <div id="result-message" style="margin-top: 10px; display: none;"></div>
+    <form id="item-form">
+      {{ form.hidden_tag() }}
+      <label>{{ form.list_name.label }}</label><br>
+      {{ form.list_name(size=31, id="list_name", list="available_lists") }}<br><br>
 
-    <label>{{ form.phrase.label }}</label><br>
-    {{ form.phrase(size=30, id="phrase-field", maxlength=phrase_max_len) }}<br>
-    <span id="trim-warning" style="display:none; font-size: 0.9em; color: darkorange;"></span><br>
+      <label>{{ form.phrase.label }}</label><br>
+      {{ form.phrase(size=31, id="phrase-field", maxlength=phrase_max_len) }}<br>
+      <span id="trim-warning" style="display:none; font-size: 0.9em; color: darkorange;"></span><br>
 
-    <label>{{ form.translation.label }}</label><br>
-    {{ form.translation(rows=2, cols=30) }}<br><br>
+      <label>{{ form.translation.label }}</label><br>
+      {{ form.translation(rows=2, cols=30, id="translation") }}<br><br>
 
-    <label>{{ form.context.label }}</label><br>
-    {{ form.context(rows=1, cols=30) }}<br><br>
+      <label>{{ form.context.label }}</label><br>
+      {{ form.context(rows=1, cols=30, id="context") }}<br><br>
 
-    <button type="submit">Add</button>
-  </form>
+      <button type="submit">Add</button>
+    </form>
 
-  <div id="result-message" style="margin-top: 10px;"></div>
-
-
-<!-- Автоматично попълване със съществуващите списъци -->
-<datalist id="available_lists">
-  {% for lst in text.training_lists %}
-    <option value="{{ lst.name }}">
-  {% endfor %}
-</datalist>
-
+    <!-- Datalist with existing lists -->
+    <datalist id="available_lists">
+      {% for lst in text.training_lists %}
+        <option value="{{ lst.name }}">
+      {% endfor %}
+    </datalist>
   </div>
 
-<script>
-document.getElementById("readable-content").addEventListener('mouseup', function () {
-    const selection = window.getSelection().toString().trim();
-    if (selection.length === 0) return;
+  <!-- Scripts -->
+  <script>
+    // Automatically fill phrase field with selection
+    document.getElementById("readable-content").addEventListener('mouseup', function () {
+        const selection = window.getSelection().toString().trim();
+        if (selection.length === 0) return;
 
-    const maxLen = parseInt(document.getElementById('phrase-field').getAttribute('maxlength')) || 200;
-    const phraseInput = document.getElementById('phrase-field');
-    const warningSpan = document.getElementById('trim-warning');
+        const maxLen = parseInt(document.getElementById('phrase-field').getAttribute('maxlength')) || 200;
+        const phraseInput = document.getElementById('phrase-field');
+        const warningSpan = document.getElementById('trim-warning');
 
-    if (selection.length > maxLen) {
-        phraseInput.value = selection.slice(0, maxLen);
-        warningSpan.innerText = `⚠️ Phrase was trimmed to ${maxLen} characters.`;
-        warningSpan.style.display = 'inline';
-    } else {
-        phraseInput.value = selection;
-        warningSpan.style.display = 'none';
-    }
-});
-</script>
-
-<script>
-document.getElementById("item-form").addEventListener("submit", function (e) {
-    e.preventDefault();
-
-    const formData = new FormData(this);
-    const data = Object.fromEntries(formData.entries());
-
-    fetch(window.location.pathname, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(result => {
-        const msg = document.getElementById("result-message");
-        msg.innerText = result.message;
-        msg.style.color = result.status === "success" ? "green" : "red";
-
-        if (result.status === "success") {
-            // Clear phrase and translation fields
-            document.getElementById("phrase-field").value = "";
-            document.getElementById("list_name").value = result.list_name;
+        if (selection.length > maxLen) {
+            phraseInput.value = selection.slice(0, maxLen);
+            warningSpan.innerText = `⚠️ Phrase was trimmed to ${maxLen} characters.`;
+            warningSpan.style.display = 'inline';
+        } else {
+            phraseInput.value = selection;
+            warningSpan.style.display = 'none';
         }
-    })
-    .catch(err => {
-        console.error("Error submitting form:", err);
     });
-});
-</script>
+  </script>
 
+  <script>
+    let messageTimeout = null;
 
+    document.getElementById("item-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+
+        fetch(window.location.pathname, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            const msg = document.getElementById("result-message");
+            const alertClass = result.status === "success" ? "alert-success" : "alert-danger";
+
+            msg.innerHTML = `
+              <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                ${result.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            `;
+            msg.style.display = "block";
+
+            if (result.status === "success") {
+                document.getElementById("phrase-field").value = "";
+                document.getElementById("list_name").value = result.list_name;
+                document.getElementById("translation").value = "";
+                document.getElementById("context").value = "";
+            }
+
+            clearTimeout(messageTimeout);
+            messageTimeout = setTimeout(() => {
+                msg.innerHTML = "";
+                msg.style.display = "none";
+            }, 5000);
+        })
+        .catch(err => {
+            console.error("Error submitting form:", err);
+        });
+    });
+
+    // Hide message when user starts typing
+    document.getElementById("phrase-field").addEventListener("input", () => {
+        const msg = document.getElementById("result-message");
+        msg.innerHTML = "";
+        msg.style.display = "none";
+        clearTimeout(messageTimeout);
+    });
+  </script>
 {% endblock %}

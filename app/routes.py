@@ -1,10 +1,13 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from app.forms import (LoginForm, RegisterForm, TextForReadingForm, TrainingListForm)
 from app.forms import (TrainingItemForm, TrainingItemWithListForm)
 from app.forms import PHRASE_MAX_LEN
 from app.models import User, TextForReading, TrainingList, TrainingItem
+from app.models import TrainingLang
 from app import db
+from config import DEFAULT_LANG_FROM, DEFAULT_LANG_TO
 
 main = Blueprint('main', __name__)
 
@@ -108,20 +111,35 @@ def add_training_item(list_id):
 
     return render_template("add_training_item.html", form=form, training_list=training_list)
 
-@main.route('/list/<int:list_id>/edit')
+@main.route("/list/<int:list_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_training_list(list_id):
     training_list = TrainingList.query.get_or_404(list_id)
 
-    # проверка дали списъкът принадлежи на текущия потребител
     if training_list.text.user_id != current_user.id:
         flash("Unauthorized access", "danger")
         return redirect(url_for('main.dashboard'))
 
+    form = TrainingListForm(obj=training_list)
+
+    # зареждане на всички езици за dropdown списъците
+    langs = TrainingLang.query.order_by(TrainingLang.lang_name).all()
+    choices = [(lang.lang_code, f"{lang.lang_name} ({lang.native_name})") for lang in langs]
+    form.lang_from.choices = choices
+    form.lang_to.choices = choices
+
+    if form.validate_on_submit():
+        training_list.name = form.name.data
+        training_list.lang_from = form.lang_from.data
+        training_list.lang_to = form.lang_to.data
+        db.session.commit()
+        flash("Training list updated.", "success")
+        return redirect(url_for("main.view_training_lists"))
+
     # вземаме всички фрази за този списък
     items = training_list.training_items
 
-    return render_template("edit_training_list.html", training_list=training_list, items=items)
+    return render_template("edit_training_list.html", form=form, training_list=training_list)
 
 @main.route('/item/<int:item_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -175,56 +193,61 @@ def train_list(list_id):
 def read_text(text_id):
     text = TextForReading.query.get_or_404(text_id)
     if text.user_id != current_user.id:
-        flash("Unauthorized", "danger")
         return redirect(url_for('main.dashboard'))
 
     form = TrainingItemWithListForm()
 
-    # Попълване на последно използваното име на списък (от session)
-    if request.method == 'GET':
-        # Търсим най-новия TrainingItem за този текст
-        latest_item = (
-            TrainingItem.query
-            .join(TrainingList)
-            .filter(TrainingList.text_id == text.id)
-            .order_by(TrainingItem.created_at.desc())
-            .first()
-        )
+    if request.method == 'POST' and request.is_json:
+        data = request.get_json()
+        form = TrainingItemWithListForm(data=data)
 
-        # Ако има поне един запис – взимаме името на списъка му
-        if latest_item:
-            form.list_name.data = latest_item.list.name
-        else:
-            form.list_name.data = "Main Training List"
+        if form.validate():
+            list_name = form.list_name.data.strip()
 
-    if form.validate_on_submit():
-        list_name = form.list_name.data.strip()
+            training_list = TrainingList.query.filter_by(name=list_name, text_id=text.id).first()
+            if not training_list:
+                training_list = TrainingList(
+                    name=list_name,
+                    text_id=text.id,
+                    lang_from=DEFAULT_LANG_FROM,
+                    lang_to=DEFAULT_LANG_TO
+                )
+                db.session.add(training_list)
+                db.session.commit()
 
-        # Търсим дали такъв списък вече съществува за текста
-        training_list = TrainingList.query.filter_by(
-            name=list_name,
-            text_id=text.id
-        ).first()
-
-        # Ако няма – създаваме нов
-        if not training_list:
-            training_list = TrainingList(name=list_name, text_id=text.id)
-            db.session.add(training_list)
+            item = TrainingItem(
+                phrase=form.phrase.data,
+                translation=form.translation.data,
+                context=form.context.data,
+                training_list_id=training_list.id
+            )
+            db.session.add(item)
             db.session.commit()
-            flash(f'New list "{list_name}" created.', "info")
 
-        # Създаваме нова фраза
-        new_item = TrainingItem(
-            phrase=form.phrase.data,
-            translation=form.translation.data,
-            context=form.context.data,
-            training_list_id=training_list.id
-        )
-        db.session.add(new_item)
+            return jsonify({
+                "status": "success",
+                "message": "Phrase added!",
+                "list_name": training_list.name
+            })
 
-        db.session.commit()
-        flash("Phrase added!", "success")
-        return redirect(url_for('main.read_text', text_id=text_id))
+        return jsonify({
+            "status": "error",
+            "message": "Validation failed"
+        }), 400
+
+    # GET
+    # автоматично попълване от най-новия елемент
+    latest_item = (
+        TrainingItem.query
+        .join(TrainingList)
+        .filter(TrainingList.text_id == text.id)
+        .order_by(TrainingItem.created_at.desc())
+        .first()
+    )
+    if latest_item:
+        form.list_name.data = latest_item.list.name
+    else:
+        form.list_name.data = "Main Training List"
 
     return render_template("read_text.html", text=text, form=form, phrase_max_len=PHRASE_MAX_LEN)
 

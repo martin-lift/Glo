@@ -25,6 +25,8 @@ class TrainingList(db.Model):
     name = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     text_id = db.Column(db.Integer, db.ForeignKey('text_for_reading.id'), nullable=False)
+    lang_from = db.Column(db.String(10), db.ForeignKey('training_lang.lang_code'), default="en")
+    lang_to = db.Column(db.String(10), db.ForeignKey('training_lang.lang_code'), default="bg")
     training_items = db.relationship('TrainingItem', backref='list', lazy=True)
 
 class TrainingItem(db.Model):
@@ -41,6 +43,16 @@ class TrainingItem(db.Model):
     last_result = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     training_list_id = db.Column(db.Integer, db.ForeignKey('training_list.id'), nullable=False)
+
+class TrainingLang(db.Model):
+    __tablename__ = 'training_lang'
+
+    lang_code = db.Column(db.String(10), primary_key=True)
+    lang_name = db.Column(db.String(100), nullable=False)
+    native_name = db.Column(db.String(100), nullable=False)
+
+    def __repr__(self):
+        return f"<TrainingLang {self.lang_code}>"
 
 @login_manager.user_loader
 def load_user(user_id):
