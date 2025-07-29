@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask import jsonify
 from flask_login import login_user, logout_user, login_required, current_user
+from sqlalchemy import func
 from app.forms import (LoginForm, RegisterForm, TextForReadingForm, TrainingListForm)
 from app.forms import (TrainingItemForm, TrainingItemWithListForm)
 from app.forms import PHRASE_MAX_LEN
@@ -75,15 +76,40 @@ def view_training_lists(text_id):
         flash("Unauthorized access", "danger")
         return redirect(url_for('main.dashboard'))
 
-    form = TrainingListForm()
+    form = TrainingListForm(
+        lang_from=DEFAULT_LANG_FROM,
+        lang_to=DEFAULT_LANG_TO
+    )
+    form.submit.label.text = "Create List"
+
+    # lang dropdowns loading
+    langs = TrainingLang.query.order_by(TrainingLang.lang_name).all()
+    choices = [(lang.lang_code, f"{lang.lang_name} ({lang.native_name})") for lang in langs]
+    form.lang_from.choices = choices
+    form.lang_to.choices = choices
+
     if form.validate_on_submit():
-        new_list = TrainingList(name=form.name.data, text_id=text.id)
+        new_list = TrainingList(
+            name=form.name.data, text_id=text.id,
+            lang_from = form.lang_from.data,
+            lang_to = form.lang_to.data
+        )
         db.session.add(new_list)
         db.session.commit()
         flash("Training list created.", "success")
         return redirect(url_for('main.add_training_item', list_id=new_list.id))
 
+    counts = dict(
+        db.session.query(
+            TrainingItem.training_list_id,
+            func.count(TrainingItem.id)
+        ).group_by(TrainingItem.training_list_id).all()
+    )
+    for lst in text.training_lists:
+        lst.item_count = counts.get(lst.id, 0)
+
     lists = text.training_lists
+
     return render_template("training_lists.html", text=text, lists=lists, form=form)
 
 @main.route('/list/<int:list_id>/add-item', methods=['GET', 'POST'])
@@ -122,11 +148,14 @@ def edit_training_list(list_id):
 
     form = TrainingListForm(obj=training_list)
 
-    # зареждане на всички езици за dropdown списъците
+    # lang dropdowns loading
     langs = TrainingLang.query.order_by(TrainingLang.lang_name).all()
     choices = [(lang.lang_code, f"{lang.lang_name} ({lang.native_name})") for lang in langs]
     form.lang_from.choices = choices
     form.lang_to.choices = choices
+
+    # all phrases for the list
+    items = training_list.training_items
 
     if form.validate_on_submit():
         training_list.name = form.name.data
@@ -134,12 +163,10 @@ def edit_training_list(list_id):
         training_list.lang_to = form.lang_to.data
         db.session.commit()
         flash("Training list updated.", "success")
-        return redirect(url_for("main.view_training_lists"))
+      # return redirect(url_for("main.view_training_lists"))
+        return render_template("edit_training_list.html", form=form, training_list=training_list, items=items)
 
-    # вземаме всички фрази за този списък
-    items = training_list.training_items
-
-    return render_template("edit_training_list.html", form=form, training_list=training_list)
+    return render_template("edit_training_list.html", form=form, training_list=training_list, items=items)
 
 @main.route('/item/<int:item_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -236,7 +263,7 @@ def read_text(text_id):
         }), 400
 
     # GET
-    # автоматично попълване от най-новия елемент
+    # fill in with the new element
     latest_item = (
         TrainingItem.query
         .join(TrainingList)

@@ -1,32 +1,67 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>Training Lists for "{{ text.title }}"</h2>
+  <h3>Training Lists for <br>"{{ text.title }}"</h3>
 
-  <a href="{{ url_for('main.dashboard') }}">← Back to Dashboard</a>
-  <br><br>
+   <hr>
 
-  <h3>Create New Training List</h3>
+  <h4>Create New Training List</h4>
   <form method="POST">
     {{ form.hidden_tag() }}
-    {{ form.name.label }}<br>
-    {{ form.name(size=40) }}<br><br>
-    {{ form.submit() }}
+  <div class="d-flex align-items-center mb-3" style="gap: 0.5rem;">
+    <label for="{{ form.name.id }}" class="form-label mb-0">{{ form.name.label }}</label>
+    {{ form.name(class="form-control", style="width: 300px;") }}
+  </div>
+    <!-- Line 2: Lang from и Lang to -->
+  <div class="d-flex gap-3 align-items-center flex-wrap mb-3">
+    <div class="d-flex align-items-center" style="gap: 0.5rem;">
+      <label for="{{ form.lang_from.id }}" class="form-label mb-0">{{ form.lang_from.label }}</label>
+      {{ form.lang_from(class="form-select", style="min-width: 150px; max-width: 200px;") }}
+    </div>
+
+    <div class="d-flex align-items-center" style="gap: 0.5rem;">
+      <label for="{{ form.lang_to.id }}" class="form-label mb-0">{{ form.lang_to.label }}</label>
+      {{ form.lang_to(class="form-select", style="min-width: 150px; max-width: 200px;") }}
+    </div>
+  </div>
+
+  <div>
+    {{ form.submit(class="btn btn-primary") }}
+  </div>
+
   </form>
 
   <hr>
 
   {% if lists %}
-    <ul>
-      {% for lst in lists %}
-        <li>
-          <strong>{{ lst.name }}</strong> ({{ lst.created_at.strftime('%Y-%m-%d') }})
-          <a href="{{ url_for('main.edit_training_list', list_id=lst.id) }}">✏️ Edit</a>
-          <a href="{{ url_for('main.add_training_item', list_id=lst.id) }}">➕ Add</a> |
-          <a href="{{ url_for('main.train_list', list_id=lst.id) }}">▶️ Train</a>
-        </li>
-      {% endfor %}
-    </ul>
+    <table class="table table-striped table-hover glo-hover-table table-sm align-middle">
+
+      <thead class="table-light">
+        <tr>
+          <th>List Name</th>
+          <th># Items</th>
+          <th>Created</th>
+          <th>Languages</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lst in lists %}
+          <tr>
+            <td><strong>{{ lst.name }}</strong></td>
+            <td>{{ lst.item_count }}</td>
+            <td>{{ lst.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>{{ lst.lang_from }}-{{ lst.lang_from }}</td>
+            <td>
+              <a href="{{ url_for('main.edit_training_list', list_id=lst.id) }}" class="btn btn-xs btn-outline-secondary">✏️ Edit</a>
+              <a href="{{ url_for('main.add_training_item', list_id=lst.id) }}" class="btn btn-xs btn-outline-success">➕ Add</a>
+              <a href="{{ url_for('main.train_list', list_id=lst.id) }}" class="btn btn-xs btn-outline-primary">▶️ Train</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
   {% else %}
     <p>No training lists yet.</p>
   {% endif %}

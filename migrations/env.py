@@ -100,12 +100,23 @@ def run_migrations_online():
         context.configure(
             connection=connection,
             target_metadata=get_metadata(),
+            compare_type=True,
+            render_as_batch=True,
+            include_object=exclude_deleted_tables,
             **conf_args
         )
 
         with context.begin_transaction():
             context.run_migrations()
 
+def exclude_deleted_tables(obj, name, type_, reflected, compare_to):
+    if type_ == "table" and compare_to is None:
+        # table is in metadata but not in db = new table → allow
+        return True
+    elif type_ == "table" and obj is not None and compare_to is None:
+        # table in db but not in model → skip (don't drop it)
+        return False
+    return True
 
 if context.is_offline_mode():
     run_migrations_offline()

@@ -26,7 +26,7 @@ class TrainingListForm(FlaskForm):
     name = StringField("List name", validators=[DataRequired()])
     lang_from = SelectField('From Language', choices=[], validators=[DataRequired()])
     lang_to = SelectField('To Language', choices=[], validators=[DataRequired()])
-    submit = SubmitField("Create List")
+    submit = SubmitField("Update List")
 
 class TrainingItemForm(FlaskForm):
     phrase = StringField("Phrase", validators=[DataRequired()])

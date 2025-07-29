@@ -2,26 +2,32 @@
 {% block content %}
   <h2>Edit Training List: "{{ training_list.name }}"</h2>
 
-  <form method="post">
-    {{ form.hidden_tag() }}
+<form method="post">
+  {{ form.hidden_tag() }}
 
-    <div class="mb-3">
-      {{ form.name.label }}<br>
-      {{ form.name(class="form-control") }}
+  <!-- line 1: Name -->
+  <div class="d-flex align-items-center mb-3" style="gap: 0.5rem;">
+    <label for="{{ form.name.id }}" class="form-label mb-0">{{ form.name.label }}</label>
+    {{ form.name(class="form-control", style="width: 300px;") }}
+  </div>
+
+  <!-- line 2: Lang from и Lang to -->
+  <div class="d-flex gap-3 align-items-center flex-wrap mb-3">
+    <div class="d-flex align-items-center" style="gap: 0.5rem;">
+      <label for="{{ form.lang_from.id }}" class="form-label mb-0">{{ form.lang_from.label }}</label>
+      {{ form.lang_from(class="form-select", style="min-width: 150px; max-width: 200px;") }}
     </div>
 
-    <div class="mb-3">
-      {{ form.lang_from.label }}<br>
-      {{ form.lang_from(class="form-select") }}
+    <div class="d-flex align-items-center" style="gap: 0.5rem;">
+      <label for="{{ form.lang_to.id }}" class="form-label mb-0">{{ form.lang_to.label }}</label>
+      {{ form.lang_to(class="form-select", style="min-width: 150px; max-width: 200px;") }}
     </div>
+  </div>
 
-    <div class="mb-3">
-      {{ form.lang_to.label }}<br>
-      {{ form.lang_to(class="form-select") }}
-    </div>
-
-    <button type="submit" class="btn btn-primary">{{ form.submit.label }}</button>
-  </form>
+  <div>
+    {{ form.submit(class="btn btn-primary") }}
+  </div>
+</form>
 
   <a href="{{ url_for('main.add_training_item', list_id=training_list.id) }}">➕ Add New Phrase</a>
   <br><br>
