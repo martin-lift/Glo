@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask import jsonify
+from flask import (Blueprint, render_template, redirect)
+from flask import jsonify, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy import func
 from app.forms import (LoginForm, RegisterForm, TextForReadingForm, TrainingListForm)
@@ -278,3 +278,19 @@ def read_text(text_id):
 
     return render_template("read_text.html", text=text, form=form, phrase_max_len=PHRASE_MAX_LEN)
 
+@main.route('/get_langs')
+def get_langs():
+    list_name = request.args.get('list_name', '')
+    text_id = request.args.get('text_id', 0)
+
+    # db search
+    training_list = TrainingList.query.filter_by(name=list_name, text_id=text_id).first()
+
+    if training_list:
+        lang_from = training_list.lang_from
+        lang_to = training_list.lang_to
+    else:
+        lang_from = DEFAULT_LANG_FROM
+        lang_to = DEFAULT_LANG_TO
+
+    return jsonify({'lang_from': lang_from, 'lang_to': lang_to})

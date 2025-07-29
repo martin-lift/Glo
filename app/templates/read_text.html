@@ -20,13 +20,16 @@
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
     z-index: 999;
   ">
-          <div id="result-message" style="margin-top: 10px; display: none;"></div>
+
+    <div id="result-message" style="margin-top: 10px; display: none;"></div>
     <form id="item-form">
       {{ form.hidden_tag() }}
       <label>{{ form.list_name.label }}</label><br>
       {{ form.list_name(size=31, id="list_name", list="available_lists") }}<br><br>
 
-      <label>{{ form.phrase.label }}</label><br>
+      <label>{{ form.phrase.label }}</label>
+       <a id="glosbe-link" href="https://glosbe.com" target="_blank" class="btn btn-link disabled">Glosbe Info</a>
+      <br>
       {{ form.phrase(size=31, id="phrase-field", maxlength=phrase_max_len) }}<br>
       <span id="trim-warning" style="display:none; font-size: 0.9em; color: darkorange;"></span><br>
 
@@ -66,6 +69,11 @@
             phraseInput.value = selection;
             warningSpan.style.display = 'none';
         }
+     //   if (typeof updateGlosbeLinkState === 'function') {
+     //     updateGlosbeLinkState();
+     //   }
+        phraseInput.dispatchEvent(new Event('input'));
+
     });
   </script>
 
@@ -125,4 +133,58 @@
         clearTimeout(messageTimeout);
     });
   </script>
+
+# Glosbe Link
+<script>
+  let langFrom = "{{ default_lang_from }}";
+  let langTo = "{{ default_lang_to }}";
+  let currentListName = "";
+
+  function updateGlosbeLinkState() {
+    const phrase = document.getElementById('phrase-field').value.trim();
+    const link = document.getElementById('glosbe-link');
+
+    if (phrase) {
+      link.classList.remove('disabled');
+    } else {
+      link.classList.add('disabled');
+    }
+  }
+
+  async function updateLangsIfNeeded() {
+    const newListName = document.getElementById('list_name').value;
+    if (newListName !== currentListName) {
+      currentListName = newListName;
+
+      const response = await fetch(
+        `/get_langs?text_id={{ text.id }}&list_name=${encodeURIComponent(currentListName)}`
+      );
+      const data = await response.json();
+
+      langFrom = data.lang_from;
+      langTo = data.lang_to;
+    }
+  }
+
+  document.getElementById('glosbe-link').addEventListener('click', async function (event) {
+    const link = event.currentTarget;
+    const phrase = document.getElementById('phrase-field').value.trim();
+
+    if (link.classList.contains('disabled') || !phrase) {
+      event.preventDefault();
+      return;
+    }
+
+    event.preventDefault();
+
+    await updateLangsIfNeeded();
+
+    const glosbeUrl = `https://glosbe.com/${langFrom}/${langTo}/${encodeURIComponent(phrase)}`;
+    window.open(glosbeUrl, '_blank');
+  });
+
+  document.getElementById('phrase-field').addEventListener('input', updateGlosbeLinkState);
+  window.addEventListener('load', updateGlosbeLinkState);
+</script>
+
 {% endblock %}
