@@ -1,14 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
-  <h2>{{ text.title }}</h2>
+  <h4>{{ text.title }}</h4>
   <p><a href="{{ text.url }}" target="_blank">
     {{ text.url[:65] }}{% if text.url|length > 65 %}...{% endif %}
   </a></p>
 
 <div id="readable-container" style="
-  height: calc(100vh - 200px);  /* оставя място за фиксираната форма */
+  height: calc(100vh - 220px);
+  width: calc(100% - 310px);
   overflow-y: auto;
-  padding-right: 20px;
+  padding-right: 10px;
   white-space: pre-wrap;
   line-height: 1.6;
 ">
@@ -20,13 +21,13 @@
   <!-- Fixed form in bottom-right corner -->
   <div style="
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 10px;
+    right: 10px;
     background: #f1f1f1;
     border: 1px solid #ccc;
-    padding: 15px;
+    padding: 10px;
     border-radius: 10px;
-    width: 330px;
+    width: 315px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
     z-index: 999;
   ">
@@ -164,9 +165,9 @@
     }
  </script>
 
-# Glosbe Link
+<!--  Glosbe Link -->
 <script src="{{ url_for('static', filename='js/glosbe_link.js') }}"></script>
-# Cambridge Link
+<!--  Cambridge Link -->
 <script src="{{ url_for('static', filename='js/cambridge_link.js') }}"></script>
 
 {% endblock %}

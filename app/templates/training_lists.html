@@ -41,6 +41,7 @@
           <th>List Name</th>
           <th># Items</th>
           <th>Created</th>
+          <th>Last Used</th>
           <th>Languages</th>
           <th>Actions</th>
         </tr>
@@ -51,11 +52,29 @@
             <td><strong>{{ lst.name }}</strong></td>
             <td>{{ lst.item_count }}</td>
             <td>{{ lst.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>{{ lst.last_used_at.strftime('%Y-%m-%d') }}</td>
             <td>{{ lst.lang_from }}-{{ lst.lang_to }}</td>
             <td>
               <a href="{{ url_for('main.edit_training_list', list_id=lst.id) }}" class="btn btn-xs btn-outline-secondary">✏️ Edit</a>
               <a href="{{ url_for('main.add_training_item', list_id=lst.id) }}" class="btn btn-xs btn-outline-success">➕ Add</a>
               <a href="{{ url_for('main.train_list', list_id=lst.id) }}" class="btn btn-xs btn-outline-primary">▶️ Train</a>
+              &nbsp;&nbsp;&nbsp;
+{% if lst.item_count == 0 %}
+  {% set confirm_message = "Are you sure you want to delete this list?\\nThe list is currently empty." %}
+{% else %}
+  {% set confirm_message = (
+    "Are you sure you want to delete this list?\\n"
+    "This will permanently delete all {} training item{} associated with this list."
+    .format(lst.item_count, 's' if lst.item_count != 1 else '')
+  ) %}
+{% endif %}
+              <form method="POST"
+                    action="{{ url_for('main.delete_training_list', list_id=lst.id) }}"
+                    style="display:inline;"
+                    onsubmit="return confirm('{{ confirm_message }}');"
+              >
+                <button type="submit" class="btn btn-xs btn-outline-danger">🗑️ Delete</button>
+              </form>
             </td>
           </tr>
         {% endfor %}

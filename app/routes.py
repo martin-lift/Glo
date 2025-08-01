@@ -2,6 +2,7 @@ from flask import (Blueprint, render_template, redirect)
 from flask import jsonify, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy import func
+from sqlalchemy.orm import aliased
 from app.forms import (LoginForm, RegisterForm, TextForReadingForm, TrainingListForm)
 from app.forms import (TrainingItemForm, TrainingItemWithListForm)
 from app.forms import PHRASE_MAX_LEN
@@ -90,25 +91,40 @@ def view_training_lists(text_id):
 
     if form.validate_on_submit():
         new_list = TrainingList(
-            name=form.name.data, text_id=text.id,
-            lang_from = form.lang_from.data,
-            lang_to = form.lang_to.data
+            name=form.name.data,
+            text_id=text.id,
+            lang_from=form.lang_from.data,
+            lang_to=form.lang_to.data
         )
         db.session.add(new_list)
         db.session.commit()
         flash("Training list created.", "success")
         return redirect(url_for('main.add_training_item', list_id=new_list.id))
 
-    counts = dict(
+    # Зареждане на списъците с брой елементи и last_used_at
+    ti = aliased(TrainingItem)
+    query = (
         db.session.query(
-            TrainingItem.training_list_id,
-            func.count(TrainingItem.id)
-        ).group_by(TrainingItem.training_list_id).all()
+            TrainingList,
+            func.max(
+                func.ifnull(ti.last_trained_at, func.ifnull(ti.created_at, TrainingList.created_at))
+            ).label("last_used_at"),
+            func.count(ti.id).label("item_count")
+        )
+        .outerjoin(ti, ti.training_list_id == TrainingList.id)
+        .filter(TrainingList.text_id == text.id)
+        .group_by(TrainingList.id)
+        .order_by(func.max(
+            func.ifnull(ti.last_trained_at, func.ifnull(ti.created_at, TrainingList.created_at))
+        ).desc())
     )
-    for lst in text.training_lists:
-        lst.item_count = counts.get(lst.id, 0)
 
-    lists = text.training_lists
+    results = query.all()
+    lists = []
+    for lst, last_used_at, item_count in results:
+        lst.last_used_at = last_used_at
+        lst.item_count = item_count
+        lists.append(lst)
 
     return render_template("training_lists.html", text=text, lists=lists, form=form)
 
@@ -294,3 +310,19 @@ def get_langs():
         lang_to = DEFAULT_LANG_TO
 
     return jsonify({'lang_from': lang_from, 'lang_to': lang_to})
+
+@main.route('/training-list/<int:list_id>/delete', methods=['POST'])
+@login_required
+def delete_training_list(list_id):
+    lst = TrainingList.query.get_or_404(list_id)
+
+    if lst.text.user_id != current_user.id:
+        flash("Unauthorized access", "danger")
+        return redirect(url_for('main.dashboard'))
+
+    db.session.delete(lst)
+    db.session.commit()
+    flash("Training list deleted.", "success")
+
+    return redirect(url_for('main.view_training_lists', text_id=lst.text_id))
+
