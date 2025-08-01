@@ -27,7 +27,12 @@ class TrainingList(db.Model):
     text_id = db.Column(db.Integer, db.ForeignKey('text_for_reading.id'), nullable=False)
     lang_from = db.Column(db.String(10), db.ForeignKey('training_lang.lang_code'), default="en")
     lang_to = db.Column(db.String(10), db.ForeignKey('training_lang.lang_code'), default="bg")
-    training_items = db.relationship('TrainingItem', backref='list', lazy=True)
+    training_items = db.relationship(
+        'TrainingItem',
+        backref='list',
+        lazy=True,
+        cascade='all, delete-orphan'
+    )
 
 class TrainingItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -42,7 +47,11 @@ class TrainingItem(db.Model):
     last_trained_at = db.Column(db.DateTime)
     last_result = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    training_list_id = db.Column(db.Integer, db.ForeignKey('training_list.id'), nullable=False)
+    training_list_id = db.Column(
+        db.Integer,
+        db.ForeignKey('training_list.id', ondelete='CASCADE'),
+        nullable=False
+    )
 
 class TrainingLang(db.Model):
     __tablename__ = 'training_lang'

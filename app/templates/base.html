@@ -30,6 +30,25 @@
     line-height: 1;
   }
 </style>
+
+    <!-- Table sort -->
+    <script src="https://unpkg.com/tablesort@5.6.0/dist/tablesort.min.js"></script>
+<style>
+  th.sortable::after {
+    content: '  ';
+  }
+  th.sortable.sorted-asc::after {
+    content: ' ↑';
+    color: rgb(204, 128, 101);
+    font-size: 0.8em;
+  }
+  th.sortable.sorted-desc::after {
+    content: ' ↓';
+    color: rgb(204, 128, 101);
+    font-size: 0.8em;
+  }
+</style>
+
 </head>
 <body>
     <div class="container">

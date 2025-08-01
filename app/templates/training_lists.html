@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h3>Training Lists for <br>"{{ text.title }}"</h3>
-
+  <h4>Training Lists for <br></h4>
+  <h3>"{{ text.title }}"</h3>
+<a style="float: right;" href="{{ url_for('main.read_text', text_id=text.id) }}">📖 Read & Add Phrases</a>
    <hr>
 
   <h4>Create New Training List</h4>
@@ -34,15 +35,15 @@
   <hr>
 
   {% if lists %}
-    <table class="table table-striped table-hover glo-hover-table table-sm align-middle">
+    <table id="training-table" class="table table-striped table-hover glo-hover-table table-sm align-middle">
 
       <thead class="table-light">
         <tr>
-          <th>List Name</th>
-          <th># Items</th>
-          <th>Created</th>
-          <th>Last Used</th>
-          <th>Languages</th>
+          <th class="sortable">List Name</th>
+          <th class="sortable"># Items</th>
+          <th class="sortable">Created</th>
+          <th class="sortable" data-sort-default="desc">Last Used</th>
+          <th class="sortable">Languages</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -55,26 +56,19 @@
             <td>{{ lst.last_used_at.strftime('%Y-%m-%d') }}</td>
             <td>{{ lst.lang_from }}-{{ lst.lang_to }}</td>
             <td>
+              <a href="{{ url_for('main.train_list', list_id=lst.id) }}" class="btn btn-xs btn-outline-primary">▶️ Train</a>
               <a href="{{ url_for('main.edit_training_list', list_id=lst.id) }}" class="btn btn-xs btn-outline-secondary">✏️ Edit</a>
               <a href="{{ url_for('main.add_training_item', list_id=lst.id) }}" class="btn btn-xs btn-outline-success">➕ Add</a>
-              <a href="{{ url_for('main.train_list', list_id=lst.id) }}" class="btn btn-xs btn-outline-primary">▶️ Train</a>
               &nbsp;&nbsp;&nbsp;
-{% if lst.item_count == 0 %}
-  {% set confirm_message = "Are you sure you want to delete this list?\\nThe list is currently empty." %}
-{% else %}
-  {% set confirm_message = (
-    "Are you sure you want to delete this list?\\n"
-    "This will permanently delete all {} training item{} associated with this list."
-    .format(lst.item_count, 's' if lst.item_count != 1 else '')
-  ) %}
-{% endif %}
-              <form method="POST"
-                    action="{{ url_for('main.delete_training_list', list_id=lst.id) }}"
-                    style="display:inline;"
-                    onsubmit="return confirm('{{ confirm_message }}');"
-              >
-                <button type="submit" class="btn btn-xs btn-outline-danger">🗑️ Delete</button>
-              </form>
+<button
+  class="btn btn-xs btn-outline-danger"
+  data-bs-toggle="modal"
+  data-bs-target="#confirmDeleteModal"
+  data-list-id="{{ lst.id }}"
+  data-list-name="{{ lst.name }}"
+  data-item-count="{{ lst.item_count }}">
+  🗑️ Delete
+</button>
             </td>
           </tr>
         {% endfor %}
@@ -84,4 +78,95 @@
   {% else %}
     <p>No training lists yet.</p>
   {% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" id="deleteListForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmDeleteModalLabel">Confirm Deletion</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="deleteMessage">Are you sure you want to delete this list?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- Delete Confirmation Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var modal = document.getElementById('confirmDeleteModal');
+  modal.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget;
+    var listId = button.getAttribute('data-list-id');
+    var listName = button.getAttribute('data-list-name');
+    var itemCount = parseInt(button.getAttribute('data-item-count'), 10);
+
+    var message = "Are you sure you want to delete the list <br><strong>\"" + listName + "\"</strong> ?";
+    if (itemCount === 0) {
+      message += "<br>The list is currently empty.";
+    } else {
+      message += "<br>This will permanently delete all " + itemCount + " training item" + (itemCount === 1 ? "" : "s") + " associated with this list.";
+    }
+
+    document.getElementById('deleteMessage').innerHTML = message;
+
+    var form = document.getElementById('deleteListForm');
+    form.action = "/training-list/" + listId + "/delete";
+  });
+});
+</script>
+
+<!-- Table sort -->
+<!--script>
+  document.addEventListener("DOMContentLoaded", function () {
+    new Tablesort(document.getElementById('training-table'));
+  });
+</script-->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const table = document.getElementById("training-table");
+    const ths = table.querySelectorAll("th");
+
+    const ts = new Tablesort(table);
+
+    // Инициализирай стрелки при клик
+    ths.forEach((th, index) => {
+      th.addEventListener("click", () => {
+        setTimeout(() => {
+          ths.forEach(th2 => th2.classList.remove("sorted-asc", "sorted-desc"));
+
+          const direction = th.getAttribute("aria-sort");
+          if (direction === "ascending") {
+            th.classList.add("sorted-asc");
+          } else if (direction === "descending") {
+            th.classList.add("sorted-desc");
+          }
+        }, 50);
+      });
+    });
+
+    // ⬇️ Задай начално сортиране (ако има data-sort-default)
+    const defaultTh = table.querySelector('th[data-sort-default]');
+    if (defaultTh) {
+      const columnIndex = Array.from(ths).indexOf(defaultTh);
+      const direction = defaultTh.getAttribute('data-sort-default');
+
+      // Кликваме веднъж или два пъти, според посоката
+      defaultTh.click(); // първо сортиране възходящо
+      if (direction === 'asc') {
+        setTimeout(() => defaultTh.click(), 10); // второ — става низходящо
+      }
+    }
+  });
+</script>
+
+
 {% endblock %}
