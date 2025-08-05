@@ -1,9 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
   <h4>{{ text.title }}</h4>
-  <p><a href="{{ text.url }}" target="_blank">
+  <p><a href="{{ text.url }}" target="_url1">
     {{ text.url[:65] }}{% if text.url|length > 65 %}...{% endif %}
-  </a></p>
+  </a>
+  {% if text.url2 is string %}
+    {% if text.url2|length > 5 %}
+      <br><a href="{{ text.url2 }}" target="_url2">
+      {{ text.url2[:65] }}  </a>
+    {% endif %}
+  {% endif %}
+  </p>
 
 <div id="readable-container" style="
   height: calc(100vh - 220px);
@@ -39,8 +46,8 @@
       {{ form.list_name(size=31, id="list_name", list="available_lists") }}<br><br>
 
       {{ form.phrase.label }}
-      <a id="glosbe-link" style="float: right;" href="https://glosbe.com" target="_blank" class="btn btn-link disabled">Glosbe</a>
-      <a id="cambridge-link" style="float: right;" href="https://dictionary.cambridge.org/dictionary/english/" target="_blank" class="btn btn-link disabled">Cambridge</a>
+      <a id="glosbe-link" style="float: right;" href="https://glosbe.com" target="glosbe" class="btn btn-link disabled">Glosbe</a>
+      <a id="cambridge-link" style="float: right;" href="https://dictionary.cambridge.org/dictionary/english/" target="cambridge" class="btn btn-link disabled">Cambridge</a>
       <br>
       {{ form.phrase(size=31, id="phrase-field", maxlength=phrase_max_len) }}<br>
       <span id="trim-warning" style="display:none; font-size: 0.9em; color: darkorange;"></span><br>

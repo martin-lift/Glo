@@ -100,8 +100,6 @@ def run_migrations_online():
         context.configure(
             connection=connection,
             target_metadata=get_metadata(),
-            compare_type=True,
-            render_as_batch=True,
             include_object=exclude_deleted_tables,
             **conf_args
         )

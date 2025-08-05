@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
-  <h2>Training: "{{ training_list.name }}"</h2>
-
+  <h4>Training: "{{ training_list.name }}"</h4>
+<br>
   {% if item %}
-    <p><strong>Phrase:</strong> {{ item.phrase }}</p>
+    <p> {{ item.translation }}</p>
+
     <form method="POST" action="#">
       <!-- Later we’ll add input and evaluation -->
-      <p><em>(Press Enter to show translation)</em></p>
+
     </form>
   {% else %}
     <p>No item with training_order = 1 found.</p>

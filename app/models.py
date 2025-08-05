@@ -4,7 +4,7 @@ from . import login_manager
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime
 from sqlalchemy.orm import relationship
-from app import db  # ако имаш Flask app и db = SQLAlchemy(app)
+from app import db
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -15,8 +15,9 @@ class User(UserMixin, db.Model):
 class TextForReading(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200))
-    content = db.Column(db.Text)
+    content = db.Column(Text(length=4294967295), nullable=True)
     url = db.Column(db.String(500), nullable=True)
+    url2 = db.Column(db.String(500), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     training_lists = db.relationship('TrainingList', backref='text', lazy=True)
 
@@ -25,8 +26,8 @@ class TrainingList(db.Model):
     name = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     text_id = db.Column(db.Integer, db.ForeignKey('text_for_reading.id'), nullable=False)
-    lang_from = db.Column(db.String(10), db.ForeignKey('training_lang.lang_code'), default="en")
-    lang_to = db.Column(db.String(10), db.ForeignKey('training_lang.lang_code'), default="bg")
+    lang_from = db.Column(db.String(10, collation="utf8mb4_unicode_ci"), db.ForeignKey('training_lang.lang_code'), default="en")
+    lang_to = db.Column(db.String(10, collation="utf8mb4_unicode_ci"), db.ForeignKey('training_lang.lang_code'), default="bg")
     training_items = db.relationship(
         'TrainingItem',
         backref='list',
@@ -56,9 +57,9 @@ class TrainingItem(db.Model):
 class TrainingLang(db.Model):
     __tablename__ = 'training_lang'
 
-    lang_code = db.Column(db.String(10), primary_key=True)
-    lang_name = db.Column(db.String(100), nullable=False)
-    native_name = db.Column(db.String(100), nullable=False)
+    lang_code = db.Column(db.String(10, collation="utf8mb4_unicode_ci"), primary_key=True)
+    lang_name = db.Column(db.String(100, collation="utf8mb4_unicode_ci"), nullable=False)
+    native_name = db.Column(db.String(100, collation="utf8mb4_unicode_ci"), nullable=False)
 
     def __repr__(self):
         return f"<TrainingLang {self.lang_code}>"

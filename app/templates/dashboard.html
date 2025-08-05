@@ -9,7 +9,7 @@
     <ul>
       {% for text in texts %}
         <li>
-          <strong>{{ text.title }}</strong><br>
+          ({{ text.id }}) <strong>{{ text.title }}</strong><br>
           {{ text.url or '' }}<br>
           <small>{{ text.content[:100] }}...</small>
            <br><a href="{{ url_for('main.read_text', text_id=text.id) }}">📖 Read & Add Phrases</a>

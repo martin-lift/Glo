@@ -5,3 +5,4 @@ Flask-SQLAlchemy
 PyMySQL
 Flask-Migrate
 sqlalchemy
+alembic

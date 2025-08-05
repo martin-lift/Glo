@@ -1,3 +1,5 @@
+from random import Random
+
 from flask import (Blueprint, render_template, redirect)
 from flask import jsonify, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
@@ -8,6 +10,7 @@ from app.forms import (TrainingItemForm, TrainingItemWithListForm)
 from app.forms import PHRASE_MAX_LEN
 from app.models import User, TextForReading, TrainingList, TrainingItem
 from app.models import TrainingLang
+from app.utils.item_orderer import ItemOrderer
 from app import db
 from config import DEFAULT_LANG_FROM, DEFAULT_LANG_TO
 
@@ -60,13 +63,18 @@ def new_text():
         db.session.add(text)
         db.session.commit()
         flash("Text saved successfully.", "success")
-        return redirect(url_for("main.dashboard"))  # Change to dashboard later
+        return redirect(url_for("main.dashboard"))  
     return render_template("new_text.html", form=form)
 
 @main.route('/dashboard')
 @login_required
 def dashboard():
-    texts = TextForReading.query.filter_by(user_id=current_user.id).all()
+    texts = (
+        TextForReading.query
+        .filter_by(user_id=current_user.id)
+        .order_by(TextForReading.id.desc())
+        .all()
+    )
     return render_template("dashboard.html", texts=texts)
 
 @main.route('/text/<int:text_id>/lists', methods=['GET', 'POST'])
@@ -144,7 +152,8 @@ def add_training_item(list_id):
             phrase=form.phrase.data,
             translation=form.translation.data,
             context=form.context.data,
-            training_list_id=training_list.id
+            training_list_id=training_list.id,
+            training_order=ItemOrderer.get_max_order(training_list.id) + 1
         )
         db.session.add(item)
         db.session.commit()
@@ -227,7 +236,11 @@ def train_list(list_id):
         return redirect(url_for('main.dashboard'))
 
     # Get only item with training_order = 1
-    item = TrainingItem.query.filter_by(training_list_id=list_id, training_order=1).first()
+    item = (
+        TrainingItem.query.filter_by(training_list_id=list_id)
+        .order_by(TrainingItem.training_order.asc(), func.rand())
+        .first()
+    )
 
     return render_template("train_session.html", training_list=training_list, item=item)
 
@@ -262,7 +275,8 @@ def read_text(text_id):
                 phrase=form.phrase.data,
                 translation=form.translation.data,
                 context=form.context.data,
-                training_list_id=training_list.id
+                training_list_id=training_list.id,
+                training_order = ItemOrderer.get_max_order(training_list.id) + 1
             )
             db.session.add(item)
             db.session.commit()
