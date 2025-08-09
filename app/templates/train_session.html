@@ -3,14 +3,29 @@
   <h4>Training: "{{ training_list.name }}"</h4>
 <br>
   {% if item %}
-    <p> {{ item.translation }}</p>
+	<p> {{ item.translation }}</p>
 
-    <form method="POST" action="#">
-      <!-- Later we’ll add input and evaluation -->
+	<form method="POST">
+		<!-- Keep track of the current item ID -->
+		<input type="hidden" name="current_item_id" value="{{ item.id }}">
+		<input type="hidden" name="stage_index" value="{{ stage_index + 1 }}">
+		<input type="hidden" name="stages" value="{{ stages }}">
 
-    </form>
+		{% if result %}
+			<p style="color: {{ 'green' if correct else 'red' }};"><strong>{{ result }}</strong></p>
+		{% endif %}
+
+		{% if not correct %}
+			<input type="text" name="user_phrase" value="{{ user_input or '' }}"
+				   placeholder="Type the phrase..." autocomplete="off" >
+			<button type="submit" name="action" value="submit">Submit</button>
+			&nbsp; <button type="submit" name="action" value="show">Show</button>
+		{% else %}
+			<button type="submit" name="action" value="next">Next Item</button>
+		{% endif %}
+	</form>
   {% else %}
-    <p>No item with training_order = 1 found.</p>
+	<p>No item with training_order = 1 found.</p>
   {% endif %}
 
   <a href="{{ url_for('main.edit_training_list', list_id=training_list.id) }}">← Back to List</a>

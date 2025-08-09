@@ -3,8 +3,17 @@ from app import db
 from sqlalchemy import func
 
 class ItemOrderer:
-    def __init__(self, list_id):
+    def __init__(self, list_id :int):
         self.list_id = list_id
+
+    def get_first(self):
+        item = (
+            TrainingItem.query
+            .filter_by(training_list_id=self.list_id)
+            .order_by(TrainingItem.training_order.asc(),TrainingItem.created_at.asc())
+            .first()
+        )
+        return item
 
     def order_normalize(self):
         items = (
@@ -29,7 +38,7 @@ class ItemOrderer:
             item.training_order = i
         db.session.commit()
 
-    def move_to_position(self, item_id, position):
+    def move_to_position(self, item_id: int, position: int):
         # self.order_normalize()
         items = (
             TrainingItem.query
@@ -40,8 +49,17 @@ class ItemOrderer:
 
         # find the element
         item_to_move = next((item for item in items if item.id == item_id), None)
+        # for item in items:
+        #     print(item.id,' ',type(item.id), "==", item_id, ' ',type(item_id))
+        #     if item.id == item_id:
+        #         item_to_move = item
+        #         break
+        # else:
+        #     item_to_move = None
+
         if item_to_move is None:
-            raise ValueError(f"TrainingItem ID {item_id} not found in list.")
+            ids_str = ", ".join(str(item.id) for item in items)
+            raise ValueError(f"TrainingItem ID {item_id} not found in list { self.list_id } / { ids_str }.")
 
         # move to position
         items.remove(item_to_move)
@@ -51,7 +69,7 @@ class ItemOrderer:
         self._apply_order(items)
 
     @staticmethod
-    def get_max_order(training_list_id):
+    def get_max_order(training_list_id :int):
         max_order = db.session.query(
             func.max(TrainingItem.training_order)
         ).filter_by(training_list_id=training_list_id).scalar()
